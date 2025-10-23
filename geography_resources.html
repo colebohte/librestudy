@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geography Resources</title>
+    <link rel="icon" type="image/x-icon" href="favi.png">
+    
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        /* General styling for message area */
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .message.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #60a5fa;
+        }
+        .hidden {
+            display: none;
+        }
+        
+        /* Spinner Styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        body {
+            background-image: url('bg.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            -webkit-backdrop-filter: blur(50px);
+            backdrop-filter: blur(50px);
+            min-height: 100vh;
+        }
+
+        /* Styling for the animated button (copied from general_resources.html) */
+        .animated-button {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .animated-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex items-center justify-center p-4">
+    <!-- Main Content Card -->
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Geography Resources</h1>
+        
+        <!-- New Collapse Toggle for Compact View -->
+        <div class="flex justify-end items-center mb-4">
+            <label for="collapse-toggle" class="text-sm font-medium text-gray-600 mr-3 select-none">Compact View</label>
+            <!-- Checkbox for toggling collapse state, calling toggleCollapse() on change -->
+            <input type="checkbox" id="collapse-toggle" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" onchange="toggleCollapse()" checked>
+        </div>
+        <!-- End New Collapse Toggle -->
+
+        <!-- Loading Indicator with Spinner -->
+        <div id="loading-indicator" class="text-gray-600 text-lg mb-4">
+            <div class="spinner"></div>
+            <span id="loading-text">Fetching resources...</span>
+        </div>
+
+        <!-- Resources Content Area (initially hidden) -->
+        <div id="resources-content" class="hidden text-left">
+            <p class="text-gray-600 mb-4">A curated list of Geography learning materials, grouped by expiry status.</p>
+            
+            <!-- Current Resources List Container -->
+            <h2 class="text-xl font-semibold mt-6 mb-2 text-green-700">Current Resources</h2>
+            <div id="current-resources-list" class="space-y-4 border-b pb-4">
+                <!-- Current Resources will be dynamically injected here -->
+            </div>
+
+            <!-- Expired Resources List Container -->
+            <h2 class="text-xl font-semibold mt-6 mb-2 text-red-700">Expired Resources</h2>
+            <div id="expired-resources-list" class="space-y-4">
+                <!-- Expired Resources will be dynamically injected here -->
+            </div>
+            
+        </div>
+
+        <!-- Message Area for Errors/Feedback -->
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+        
+        <!-- Message Area for Errors/Feedback -->
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+        
+        <a href="/" class="animated-button inline-flex items-center justify-center px-6 py-3 border border-gray-200 text-base font-medium rounded-lg text-indigo-700 bg-white shadow-md hover:bg-gray-50 mt-8 w-full">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+
+    <script>
+        console.log('--- SCRIPT START: Initializing Application ---');
+
+        /**
+         * Formats a UTC date string (like 'YYYY-MM-DD') into a consistent DD-Mon-YYYY string 
+         * using UTC methods to prevent local timezone shifting the displayed day.
+         * @param {string} dateString - The date string from the database.
+         * @returns {string} Formatted date string (DD-Mon-YYYY) or null.
+         */
+        function getDisplayDate(dateString) {
+            if (!dateString) return null;
+            try {
+                const date = new Date(dateString);
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                
+                // Extracting UTC components prevents local timezone shift
+                const year = date.getUTCFullYear();
+                const monthIndex = date.getUTCMonth(); 
+                const monthAbbr = months[monthIndex];
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                
+                // Format: DD-Mon-YYYY
+                return `${day}-${monthAbbr}-${year}`;
+            } catch (e) {
+                console.error("Failed to format date:", dateString, e);
+                return 'Invalid Date';
+            }
+        }
+        
+        
+        // --- Supabase Credentials (Hardcoded as per previous Canvases) ---
+        const SUPABASE_URL = 'https://yysuwkdgluzouwdpoyjr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_NoOcmfhyN21l23ImU4UaaQ_NEWImOMh';
+        const TABLE_NAME = 'Geography'; // <<< SET FOR GEOGRAPHY
+        const SELECT_COLUMNS = 'id, res_name, res_link, res_expiry';
+        // --------------------------------------------------------
+
+        let supabaseClient;
+        const messageArea = document.getElementById('message-area');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const resourcesContent = document.getElementById('resources-content');
+        const currentResourcesList = document.getElementById('current-resources-list');
+        const expiredResourcesList = document.getElementById('expired-resources-list');
+
+        // Global state for resources and collapse status
+        let isCollapsed = true; // Set to true to be on by default
+        window.lastFetchedResources = []; // Store the last fetched data
+
+        /**
+         * Toggles the collapse state and re-renders the resources using cached data.
+         */
+        function toggleCollapse() {
+            isCollapsed = document.getElementById('collapse-toggle').checked;
+            if (window.lastFetchedResources.length > 0) {
+                renderResources(window.lastFetchedResources);
+            } else {
+                // If no data loaded yet, fetch it (this is a fallback)
+                fetchDataAndRender();
+            }
+            console.log(`Collapse state toggled to: ${isCollapsed}`);
+        }
+        window.toggleCollapse = toggleCollapse; // Make it globally accessible for the HTML attribute
+        
+        /**
+         * Displays a message to the user.
+         * @param {string} text - The message text.
+         * @param {'success' | 'error' | 'info'} type - The type of message.
+         */
+        function showMessage(text, type) {
+            console.log(`[showMessage] Executed with type: ${type} | Text: ${text}`);
+            messageArea.textContent = text;
+            let className = 'mt-4 p-3 rounded-lg text-sm text-left';
+            if (type === 'success') {
+                className += ' bg-green-100 text-green-800 border border-green-300 message success';
+            } else if (type === 'error') {
+                className += ' bg-red-100 text-red-800 border border-red-300 message error';
+            } else if (type === 'info') {
+                className += ' bg-blue-100 text-blue-800 border border-blue-300 message info';
+            }
+            messageArea.className = className;
+            messageArea.classList.remove('hidden');
+            
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+            }, 5000);
+        }
+
+        /**
+         * Renders the list of resources fetched from Supabase, grouped by status.
+         * @param {Array<Object>} resources - Array of resource objects.
+         */
+        function renderResources(resources) {
+            console.log(`[renderResources] Starting rendering for ${resources.length} resources. Collapsed: ${isCollapsed}`);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); 
+
+            currentResourcesList.innerHTML = ''; 
+            expiredResourcesList.innerHTML = ''; 
+
+            let currentCount = 0;
+            let expiredCount = 0;
+
+            if (resources.length === 0) {
+                currentResourcesList.innerHTML = '<p class="text-gray-500 text-center py-2 text-sm italic">No resources found in the database.</p>';
+                return;
+            }
+
+            resources.forEach((res) => {
+                let isExpired = false;
+                const displayDate = getDisplayDate(res.res_expiry);
+                const expiryText = res.res_expiry ? displayDate : 'Non-expiring';
+                
+                if (res.res_expiry) {
+                    const expiryDate = new Date(res.res_expiry);
+                    expiryDate.setHours(0, 0, 0, 0); 
+                    
+                    // Logic: Expired if expiry date is BEFORE today (i.e., yesterday or earlier)
+                    if (expiryDate < today) {
+                        isExpired = true;
+                    }
+                }
+
+                const linkUrl = res.res_link || '#';
+                const linkTarget = res.res_link ? '_blank' : '_self';
+                
+                // Dynamic styling based on collapse state
+                const itemPadding = isCollapsed ? 'p-2' : 'p-4';
+                const titleSize = isCollapsed ? 'text-base' : 'text-lg';
+                const linkMargin = isCollapsed ? 'mt-1' : 'mt-2'; 
+                
+                const titleClass = `font-semibold ${isExpired ? 'text-red-600' : 'text-indigo-600'} ${titleSize}`;
+                
+                // Styling for the date text
+                const compactExpiryClass = `text-xs text-gray-500 ${isExpired ? 'text-red-500' : ''} ml-2 whitespace-nowrap`;
+                const expandedExpiryClass = `text-sm text-gray-500 mt-1 mb-2`; 
+
+                let contentHTML;
+
+                if (isCollapsed) {
+                    // COMPACT VIEW: Name and Date side-by-side
+                    contentHTML = `
+                        <div class="flex justify-between items-start mb-1">
+                            <!-- Resource Name (takes up max space) -->
+                            <div class="flex-grow min-w-0 pr-1">
+                                <span class="${titleClass} block overflow-hidden text-ellipsis">${res.res_name || 'Untitled Resource'}</span>
+                            </div>
+                            <!-- Expiry Date (fixed width on the right) -->
+                            <span class="${compactExpiryClass}" title="Expiry Date">${expiryText}</span>
+                        </div>
+                        
+                        <a href="${linkUrl}" target="${linkTarget}" 
+                            class="inline-flex items-center text-sm font-medium text-blue-500 hover:text-blue-700 underline transition duration-150 ${linkMargin}"
+                            ${!res.res_link ? 'onclick="return false;"' : ''}>
+                            ${res.res_link ? 'View Resource' : 'Link Unavailable'}
+                        </a>
+                    `;
+                } else {
+                    // EXPANDED VIEW: Name on top, Date below, Link below that (Original Layout)
+                    contentHTML = `
+                        <h3 class="${titleClass} mb-0">${res.res_name || 'Untitled Resource'}</h3>
+                        
+                        <p class="${expandedExpiryClass}">${res.res_expiry ? `Expires: ${displayDate}` : 'Non-expiring'}</p>
+                        
+                        <a href="${linkUrl}" target="${linkTarget}" 
+                            class="inline-flex items-center text-sm font-medium text-blue-500 hover:text-blue-700 underline transition duration-150 ${linkMargin}"
+                            ${!res.res_link ? 'onclick="return false;"' : ''}>
+                            ${res.res_link ? 'View Resource' : 'Link Unavailable'}
+                        </a>
+                    `;
+                }
+
+                const resourceItem = `
+                    <div class="${itemPadding} border ${isExpired ? 'border-red-300 bg-red-50' : 'border-gray-200'} rounded-lg shadow-sm hover:shadow-md transition duration-200">
+                        ${contentHTML}
+                    </div>
+                `;
+
+                if (isExpired) {
+                    expiredResourcesList.innerHTML += resourceItem;
+                    expiredCount++;
+                } else {
+                    currentResourcesList.innerHTML += resourceItem;
+                    currentCount++;
+                }
+            });
+            
+            // Add "No items" messages if necessary
+            if (currentCount === 0) {
+                currentResourcesList.innerHTML = '<p class="text-gray-500 text-center py-2 text-sm italic">No active resources found.</p>';
+            }
+            if (expiredCount === 0) {
+                expiredResourcesList.innerHTML = '<p class="text-gray-500 text-center py-2 text-sm italic">No resources have expired.</p>';
+            }
+        }
+
+        /**
+         * Fetches all data and triggers the render function.
+         */
+        async function fetchDataAndRender() {
+            console.log('ACTION: Fetching and rendering data...');
+            // Show loading spinner while fetching
+            loadingIndicator.classList.remove('hidden');
+            resourcesContent.classList.add('hidden'); // Hide content while loading
+
+            const { data, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .select(SELECT_COLUMNS)
+                .order('res_name', { ascending: true });
+
+            loadingIndicator.classList.add('hidden');
+            
+            if (error) {
+                showMessage(`Error loading resources. Check RLS or connectivity: ${error.message}`, 'error');
+                console.error('Supabase fetch error:', error);
+            } else if (data) {
+                window.lastFetchedResources = data; // Cache the data
+                renderResources(data);
+                resourcesContent.classList.remove('hidden');
+            } else {
+                showMessage('Received an unexpected empty response from the database.', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('EVENT: DOMContentLoaded fired. Starting initialization sequence.');
+
+            try {
+                // 1. Initialize Supabase client
+                if (!window.supabase || !window.supabase.createClient) {
+                    throw new Error('Supabase library not loaded correctly.');
+                }
+                
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('STEP 2: Supabase client initialized.');
+
+                // 2. Perform initial data load
+                await fetchDataAndRender();
+                console.log('STEP 3: Initial data load complete.');
+
+                // 3. Set up the real-time listener for live updates
+                console.log('STEP 4: Setting up real-time listener for table "Geography"...');
+                
+                supabaseClient.channel('resource_changes')
+                    .on('postgres_changes', { 
+                        event: '*', // Listen to INSERT, UPDATE, DELETE
+                        schema: 'public', 
+                        table: TABLE_NAME 
+                    }, (payload) => {
+                        console.log('Realtime change received:', payload);
+                        const type = payload.eventType.toLowerCase();
+                        showMessage(`Database updated: ${type.charAt(0).toUpperCase() + type.slice(1)} detected. Refreshing list...`, 'info');
+                        // Re-fetch all data to ensure the list is consistently sorted and accurate
+                        fetchDataAndRender(); 
+                    })
+                    .subscribe();
+
+                console.log('--- SCRIPT END: Final execution path finished. Real-time listener active. ---');
+
+            } catch (error) {
+                console.error('FATAL ERROR: Initialization or connection failed:', error);
+                // Ensure loading indicator is hidden even on failure
+                loadingIndicator.classList.add('hidden');
+                showMessage(`System Error during startup: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

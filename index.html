@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        body {
+            background-image: url('bg.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            -webkit-backdrop-filter: blur(50px);
+            backdrop-filter: blur(50px);
+            min-height: 100vh;
+        }
+        
+        .card-link {
+            /* Custom styling for the navigation cards */
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col items-center justify-center p-6">
+    
+    <!-- Header -->
+    <header class="text-center mb-10 w-full max-w-4xl">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-800 mb-2">Class 8B StudyHub</h1>
+        <p class="text-xl text-gray-600">Quick Access to Resources and Scheduled Assignments</p>
+    </header>
+
+    <!-- Navigation Grid -->
+    <div class="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- English Resources -->
+        <a href="english_resources" class="card-link block bg-white p-6 rounded-xl shadow-lg border border-indigo-100 hover:border-indigo-400">
+            <div class="flex items-center space-x-4">
+                <span class="text-4xl">📝</span>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">English Resources</h2>
+                    <p class="text-sm text-gray-500">View Resources for English Assgignments.</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Geography Resources -->
+        <a href="geography_resources" class="card-link block bg-white p-6 rounded-xl shadow-lg border border-green-100 hover:border-green-400">
+            <div class="flex items-center space-x-4">
+                <span class="text-4xl">🌍</span>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Geography Resources</h2>
+                    <p class="text-sm text-gray-500">View Resources for Geography Assgignments.</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Science Resources -->
+        <a href="science_resources" class="card-link block bg-white p-6 rounded-xl shadow-lg border border-red-100 hover:border-red-400">
+            <div class="flex items-center space-x-4">
+                <span class="text-4xl">🔬</span>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Science Resources</h2>
+                    <p class="text-sm text-gray-500">View Resources for Science Assgignments.</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Scheduled Tests -->
+        <a href="scheduled_tests" class="card-link block bg-white p-6 rounded-xl shadow-lg border border-yellow-100 hover:border-yellow-400">
+            <div class="flex items-center space-x-4">
+                <span class="text-4xl">🗓️</span>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Scheduled Tests</h2>
+                    <p class="text-sm text-gray-500">Track all upcoming assignments and tests.</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- General Resources -->
+        <a href="general_resources" class="card-link block bg-white p-6 rounded-xl shadow-lg border border-blue-100 hover:border-blue-400">
+            <div class="flex items-center space-x-4">
+                <span class="text-4xl">📚</span>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">All General Resources</h2>
+                    <p class="text-sm text-gray-500">View combined resources, grouped by subject.</p>
+                </div>
+            </div>
+        </a>
+
+    </div>
+
+    <footer class="mt-12 text-center text-gray-400 text-xs">
+        STTH Class 8B Study Tracker, Built upon technologies built by River Games.
+    </footer>
+</body>
+</html>
