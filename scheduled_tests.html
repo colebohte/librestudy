@@ -237,7 +237,7 @@
                 
                 let isCompleted = false;
                 let dateColor = 'text-gray-700';
-                let icon = '📅';
+                let icon = '';
 
                 if (dateString) {
                     const testDate = new Date(dateString);
@@ -246,13 +246,13 @@
                     if (testDate < today) {
                         isCompleted = true;
                         dateColor = 'text-red-500';
-                        icon = '✅'; // Using checkmark for completed
+                        icon = ''; // Using checkmark for completed
                     } else if (testDate.getTime() === today.getTime()) {
                         dateColor = 'text-orange-500 font-bold';
-                        icon = '🚨'; // Today!
+                        icon = ''; // Today!
                     } else {
                         dateColor = 'text-green-600 font-medium';
-                        icon = '🗓️';
+                        icon = '';
                     }
                 } else {
                     icon = '❓';
@@ -362,6 +362,7 @@
     </script>
 </body>
 </html>
+
 
 
 
